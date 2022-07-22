@@ -1,11 +1,10 @@
 const express = require("express");
 const route = express.Router();
 const db = require("../models");
-const bcrypt = require("bcrypt");
-const { Sequelize } = require('sequelize');
+const verifyToken = require("../middleware/AuthMiddleware");
 
 // all employees
-route.get("/all", async (req, res) => {
+route.get("/all", verifyToken, async (req, res) => {
   await db.Employee.findAll().then((data) => {
     if (data.length != 0) {
       res.send({
@@ -21,37 +20,36 @@ route.get("/all", async (req, res) => {
   });
 });
 
-// post api
-route.post("/signup", async (req, res) => {
-  if (req.body.password === req.body.confirmPassword) {
-    const hashPassword = bcrypt.hashSync(req.body.password, 10);
-    await db.Employee.create({
-      name: req.body.name,
-      phone: req.body.phone,
-      email: req.body.email,
-      password: hashPassword
-    })
-      .then((signupData) =>
-        res.status(200).send({
-          status: "success",
-          result: signupData,
-        })
-      )
-      .catch((error) => {
-        // if (error.name === "SequelizeUniqueConstraintError") {
-        //   res.status(403);
-        // } else {
-          //   res.status(500);
-          //   res.send({ status: "error", message: "Something went wrong" });
-          // }
-          res.send({ status: "error", message: error.errors.map((item) => item.message) });
-      });
-  } else {
+// delete employee
+route.delete("/delete/:id", verifyToken, async (req, res) => {
+  db.Employee.destroy({
+    where: {
+      id: req.params.id,
+    },
+  }).then(() =>
     res.send({
-        status: "error",
-        message: "password not matched.",
+      status: "success",
+      message: "Employee Deleted Successfully",
+    })
+  );
+});
+
+// update dadta
+route.put("/edit-emp/:id", verifyToken, async(req, res) => {
+    await db.Employee.update({
+        name: req.body.name,
+        phone: req.body.phone,
+        email: req.body.email
+    }, {
+      where: {
+        id: req.params.id
+      }
+    }).then(() => {
+      res.send({
+        status: "success",
+        message: "Employee Updated Successfully",
+      })
     });
-  }
 });
 
 module.exports = route;
