@@ -4,8 +4,25 @@ const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-// signup
-router.post("/signup", async (req, res) => {
+const multer = require("multer");
+const path = require("path");
+
+// -------- signup ---------
+var storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/users");
+  },
+  filename: function (req, file, cb) {
+    cb(
+      null,
+      `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`
+    );
+  },
+});
+
+var upload = multer({ storage: storage });
+
+router.post("/signup", upload.single("image"), async (req, res, next) => {
   const hashPassword = bcrypt.hashSync(req.body.password, 10);
   if (req.body.name && req.body.phone && req.body.email && req.body.password) {
     if (req.body.password === req.body.confirmPassword) {
@@ -22,6 +39,8 @@ router.post("/signup", async (req, res) => {
           phone: req.body.phone,
           email: req.body.email,
           password: hashPassword,
+          image: req.file.filename,
+          company_id: req.body.company_id,
         }).then((signupData) => {
           res
             .status(200)
@@ -29,17 +48,16 @@ router.post("/signup", async (req, res) => {
               status: "success",
               result: signupData,
             })
-            .catch((error) => {
-              if (error.name === "SequelizeUniqueConstraintError") {
-                res.status(403);
-              } else {
-                res.status(500);
-                res.send({
-                  status: "error",
-                  message: "Something went wrong",
-                });
-              }
+        }).catch((error) => {
+          if (error.name === "SequelizeUniqueConstraintError") {
+            res.status(403);
+          } else {
+            res.status(500);
+            res.send({
+              status: "error",
+              message: "Something went wrong",
             });
+          }
         });
       } else {
         res.send({
@@ -61,7 +79,7 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// login
+// ------- login --------
 router.post("/login", async (req, res) => {
   const checkEmail = await db.Employee.findOne({
     where: {
@@ -96,9 +114,9 @@ router.post("/login", async (req, res) => {
           email: loginResponse.email,
           phone: loginResponse.phone,
         },
-        process.env.ACCESS_SECRET_KEY,
+        process.env.ACCESS_SECRET_KEY
       );
-      
+
       res.send({
         status: "success",
         message: "Login Successfull",

@@ -5,9 +5,9 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       validate: {
         notNull: {
-          msg: 'Please enter your name'
-        }
-      }
+          msg: "Please enter your name",
+        },
+      },
     },
     phone: {
       type: DataTypes.BIGINT,
@@ -15,9 +15,9 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       validate: {
         notNull: {
-          msg: 'Please enter your phone number'
-        }
-      }
+          msg: "Please enter your phone number",
+        },
+      },
     },
     email: {
       type: DataTypes.STRING,
@@ -25,19 +25,27 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       validate: {
         notNull: {
-          msg: 'Please enter your email'
-        }
-      }
+          msg: "Please enter your email",
+        },
+      },
     },
     password: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
         notNull: {
-          msg: 'Please enter your password'
-        }
-      }
+          msg: "Please enter your password",
+        },
+      },
+    },
+    image: {
+      type: DataTypes.STRING,
     },
   });
+  Employee.associate = (models) => {
+    Employee.belongsTo(models.Company, {
+      foreignKey: "company_id",
+    });
+  };
   return Employee;
 };
